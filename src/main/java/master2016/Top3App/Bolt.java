@@ -6,6 +6,10 @@ import org.apache.storm.topology.OutputFieldsDeclarer;
 import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.tuple.Tuple;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class Bolt extends BaseRichBolt {
@@ -13,6 +17,7 @@ public class Bolt extends BaseRichBolt {
     String keyword;
     String lang;
     Boolean started = false;
+    Integer counter = 0;
     Map<String, Integer> hashCount = new TreeMap<String, Integer>();
 
     public Bolt (String lang, String keyword){
@@ -34,6 +39,7 @@ public class Bolt extends BaseRichBolt {
                 System.out.println(lang + ", " + hashtag + " <---- START");
             } else {
                 started = false;
+                counter++;
                 System.out.println(lang + ", " + hashtag + " <---- END");
                 printResult();
                 hashCount = new TreeMap<String, Integer>();
@@ -59,34 +65,47 @@ public class Bolt extends BaseRichBolt {
         }
     }
 
+
+
     public void printResult () {
-        hash firstHash = new hash(0, "");
-        hash secondHash = new hash(0, "");
-        hash thirdHash = new hash(0, "");
+        hash firstHash = new hash(0, "null");
+        hash secondHash = new hash(0, "null");
+        hash thirdHash = new hash(0, "null");
+
+        List<hash> hashList = Arrays.asList(firstHash, secondHash, thirdHash);
 
         for (Map.Entry<String, Integer> entry : hashCount.entrySet()) {
-            String hashtag = entry.getKey();
-            Integer count = entry.getValue();
-            if (count > firstHash.count) {
-                thirdHash.count = secondHash.count;
-                thirdHash.hashtag = secondHash.hashtag;
-                secondHash.count = firstHash.count;
-                secondHash.hashtag = firstHash.hashtag;
-                firstHash.count = count;
-                firstHash.hashtag = hashtag;
-            } else if (count > secondHash.count) {
-                thirdHash.count = secondHash.count;
-                thirdHash.hashtag = secondHash.hashtag;
-                secondHash.count = count;
-                secondHash.hashtag = hashtag;
-            } else if (count > thirdHash.count) {
-                thirdHash.count = count;
-                thirdHash.hashtag = hashtag;
+            hash newHash = new hash(entry.getValue(), entry.getKey());
+            if (newHash.count > hashList.get(0).count) {
+                hashList.set(2, hashList.get(1));
+                hashList.set(1, hashList.get(0));
+                hashList.set(0, newHash);
+            } else if (newHash.count > hashList.get(1).count) {
+                hashList.set(2, hashList.get(1));
+                hashList.set(1, newHash);
+            } else if (newHash.count > hashList.get(2).count) {
+                hashList.set(2, newHash);
             }
         }
-        System.out.print("#" + firstHash.hashtag + "," + firstHash.count + ", ");
-        System.out.print("#" + secondHash.hashtag + "," + secondHash.count + ", ");
-        System.out.print("#" + thirdHash.hashtag + "," + thirdHash.count);
+
+        resultToFile(hashList);
+    }
+
+
+    public void resultToFile (List<hash> hashList) {
+        try (
+            FileWriter fw = new FileWriter(lang + "_ID", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter out = new PrintWriter(bw)
+        ){
+            out.print(counter + "," + lang + ",");
+            for (hash hash : hashList) {
+                out.print(hash.hashtag + "," + hash.count + ",");
+            }
+            out.println();
+        } catch (IOException e) {
+            System.out.println(e);
+        }
     }
 
     private class hash {
@@ -97,6 +116,8 @@ public class Bolt extends BaseRichBolt {
             this.hashtag=y;
         }
     }
+
+
 
     public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
 

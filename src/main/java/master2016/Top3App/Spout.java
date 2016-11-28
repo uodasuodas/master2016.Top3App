@@ -15,7 +15,6 @@ import java.util.Random;
 public class Spout extends BaseRichSpout {
 
     private SpoutOutputCollector collector;
-    public static final String STREAMNAME = "hashtagstream";
     public static final String LANG = "language";
     public static final String FIELDNAME = "hashtag";
 
@@ -23,6 +22,7 @@ public class Spout extends BaseRichSpout {
 
     public Spout (List<String> langList) {
         this.langList = langList;
+
     }
 
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
@@ -30,19 +30,22 @@ public class Spout extends BaseRichSpout {
     }
 
     public void nextTuple() {
-        //String lang = "lang"+new Random().nextInt(5);
-        String lang = "en";
+
         String hashtag = String.valueOf(new Random().nextInt(10));
+        Random r = new Random();
+        String lang = langList.get(r.nextInt(langList.size()));
         Values values = new Values(lang, hashtag);
-        collector.emit(STREAMNAME,values);
+        collector.emit(lang,values);
         try {
-            Thread.sleep(1000);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declareStream(STREAMNAME, new Fields(LANG, FIELDNAME));
+        for (String lang: langList) {
+            outputFieldsDeclarer.declareStream(lang, new Fields(LANG, FIELDNAME));
+        }
     }
 }
