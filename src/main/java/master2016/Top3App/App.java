@@ -26,13 +26,12 @@ public class App {
             builder.setBolt(boltName, new Bolt(lang, keyword))
                     .fieldsGrouping("Spout",lang, new Fields("language"));
         }
-
         LocalCluster lcluster = new LocalCluster();
         lcluster.submitTopology("HashtagTopology", new Config(), builder.createTopology());
 
         //LEAVING IT RUN FOR 60 SECONDS...
-        Utils.sleep(50000);
-
+        Utils.sleep(500000);
+        Spout.consumer.close();
         lcluster.shutdown();
 
     }

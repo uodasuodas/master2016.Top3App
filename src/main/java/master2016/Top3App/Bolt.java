@@ -80,11 +80,34 @@ public class Bolt extends BaseRichBolt {
                 hashList.set(2, hashList.get(1));
                 hashList.set(1, hashList.get(0));
                 hashList.set(0, newHash);
+            } else if (newHash.count == hashList.get(0).count) {
+                int compare = newHash.hashtag.compareTo(hashList.get(0).hashtag);
+                if (compare < 0) {
+                    hashList.set(2, hashList.get(1));
+                    hashList.set(1, newHash);
+                } else if (compare > 0) {
+                    hashList.set(2, hashList.get(1));
+                    hashList.set(1, hashList.get(0));
+                    hashList.set(0, newHash);
+                }
             } else if (newHash.count > hashList.get(1).count) {
                 hashList.set(2, hashList.get(1));
                 hashList.set(1, newHash);
+            } else if (newHash.count == hashList.get(1).count) {
+                int compare = newHash.hashtag.compareTo(hashList.get(1).hashtag);
+                if (compare < 0) {
+                    hashList.set(2, newHash);
+                } else if (compare > 0) {
+                    hashList.set(2, hashList.get(1));
+                    hashList.set(1, newHash);
+                }
             } else if (newHash.count > hashList.get(2).count) {
                 hashList.set(2, newHash);
+            } else if (newHash.count == hashList.get(2).count) {
+                int compare = newHash.hashtag.compareTo(hashList.get(1).hashtag);
+                if (compare > 0) {
+                    hashList.set(2, newHash);
+                }
             }
         }
 
