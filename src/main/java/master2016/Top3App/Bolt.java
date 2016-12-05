@@ -32,7 +32,6 @@ public class Bolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         String hashtag = (String) tuple.getValueByField("hashtag");
         String lang = (String) tuple.getValueByField("language");
-
         if (hashtag.equals(keyword)) {
             if (started == false) {
                 started = true;
@@ -46,6 +45,8 @@ public class Bolt extends BaseRichBolt {
             }
         } else if (started == true) {
             count(hashtag);
+            System.out.println(lang + ", " + hashtag);
+        } else {
             System.out.println(lang + ", " + hashtag);
         }
 
@@ -64,8 +65,6 @@ public class Bolt extends BaseRichBolt {
             hashCount.put(hashtag, 1);
         }
     }
-
-
 
     public void printResult () {
         hash firstHash = new hash(0, "null");
@@ -117,7 +116,7 @@ public class Bolt extends BaseRichBolt {
 
     public void resultToFile (List<hash> hashList) {
         try (
-            FileWriter fw = new FileWriter(lang + "_ID", true);
+            FileWriter fw = new FileWriter(lang + "_ID05", true);
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter out = new PrintWriter(bw)
         ){
@@ -140,25 +139,4 @@ public class Bolt extends BaseRichBolt {
         }
     }
 
-
-
-    public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
-
-        List<Map.Entry<K, V>> list =
-                new LinkedList<Map.Entry<K, V>>( map.entrySet() );
-        Collections.sort( list, new Comparator<Map.Entry<K, V>>()
-        {
-            public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
-            {
-                return (o2.getValue()).compareTo( o1.getValue() );
-            }
-        } );
-
-        Map<K, V> result = new LinkedHashMap<K, V>();
-        for (Map.Entry<K, V> entry : list)
-        {
-            result.put( entry.getKey(), entry.getValue() );
-        }
-        return result;
-    }
 }
