@@ -1,4 +1,4 @@
-package master2016.Top3App;
+package master2016;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -16,13 +16,15 @@ public class Bolt extends BaseRichBolt {
 
     String keyword;
     String lang;
+    String folder;
     Boolean started = false;
     Integer counter = 0;
     Map<String, Integer> hashCount = new TreeMap<String, Integer>();
 
-    public Bolt (String lang, String keyword){
+    Bolt(String lang, String keyword, String folder){
         this.lang = lang;
         this.keyword = keyword;
+        this.folder = folder;
     }
 
     public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -116,7 +118,7 @@ public class Bolt extends BaseRichBolt {
 
     public void resultToFile (List<hash> hashList) {
         try (
-            FileWriter fw = new FileWriter(lang + "_ID05", true);
+            FileWriter fw = new FileWriter(lang + "_05", true);
             BufferedWriter bw = new BufferedWriter(fw);
             PrintWriter out = new PrintWriter(bw)
         ){

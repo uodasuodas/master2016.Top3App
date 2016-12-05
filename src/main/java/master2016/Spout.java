@@ -1,4 +1,4 @@
-package master2016.Top3App;
+package master2016;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,20 +19,22 @@ public class Spout extends BaseRichSpout {
     public static final String STREAM = "stream";
     public static final String LANG = "language";
     public static final String FIELDNAME = "hashtag";
+    public static String brokerUrl;
     public Properties props;
     public KafkaConsumer<String, String> consumer;
 
     public String lang;
     public static List<KafkaConsumer<String, String>> consumers = new ArrayList<KafkaConsumer<String, String>>();
 
-    public Spout (String lang) {
+    Spout (String brokerUrl, String lang) {
+        this.brokerUrl = brokerUrl;
         this.lang = lang;
     }
 
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.collector=spoutOutputCollector;
         props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9093,localhost:9094");
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerUrl);
         props.put("group.id", "Group1");
         props.put("enable.auto.commit", "true");
         props.put("auto.commit.interval.ms", "1000");
