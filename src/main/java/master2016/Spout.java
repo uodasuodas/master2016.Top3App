@@ -14,8 +14,8 @@ import org.apache.storm.tuple.Values;
 
 import java.util.*;
 
-public class Spout extends BaseRichSpout {
-
+public class Spout extends BaseRichSpout
+{
     public static final String Stream = "stream";
     public static final String FieldName1 = "language";
     public static final String FieldName2 = "hashtag";
@@ -26,15 +26,14 @@ public class Spout extends BaseRichSpout {
     private KafkaConsumer< String, String > Consumer;
     private String Lang;
 
-    public Spout( String brokerUrl, String lang ) {
-    	
+    public Spout( String brokerUrl, String lang )
+    {
         this.BrokerUrl = brokerUrl;
         this.Lang = lang;
-        
     }
 
-    public void open( Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
-        
+    public void open( Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector )
+    {
     	this.Collector = spoutOutputCollector;
         Props = new Properties();
         Props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BrokerUrl );
@@ -46,34 +45,29 @@ public class Spout extends BaseRichSpout {
 
         Consumer = new KafkaConsumer<String, String>( Props );
         Consumer.subscribe( Arrays.asList( Lang ) );
-
     }
 
-    public void nextTuple() {
-    	
-        try {
-        	
-                ConsumerRecords< String, String > records = Consumer.poll( 10 );
-                for ( ConsumerRecord< String, String > record : records ) {
-
-                    String lang = record.key();
-                    String hashtag = record.value();
-                    Values values = new Values( lang, hashtag );
-                    Collector.emit( Stream, values );
-                    
-                }
-                
-        } catch ( Exception e ) {
-        	
-            e.printStackTrace();
-        
+    public void nextTuple()
+    {
+        try
+        {
+        	ConsumerRecords< String, String > records = Consumer.poll( 10 );
+        	for( ConsumerRecord< String, String > record : records )
+        	{
+        		String lang = record.key();
+        		String hashtag = record.value();
+        		Values values = new Values( lang, hashtag );
+        		Collector.emit( Stream, values );
+        	}
         }
-
+        catch( Exception e )
+        {
+            e.printStackTrace();
+        }
     }
 
-    public void declareOutputFields( OutputFieldsDeclarer outputFieldsDeclarer ) {
-
+    public void declareOutputFields( OutputFieldsDeclarer outputFieldsDeclarer )
+    {
         outputFieldsDeclarer.declareStream( Stream, new Fields( FieldName1, FieldName2 ) );
-
     }
 }
