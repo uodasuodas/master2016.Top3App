@@ -145,7 +145,7 @@ public class Bolt extends BaseRichBolt
 
     private void resultToFile(List<hash> hashList)
     {
-    	String path = System.getProperty( "user.dir" );
+    	String path = "";
     	if( !Folder.startsWith( "/", 0 ) )
     		path = path + "/" + Folder;
     	else

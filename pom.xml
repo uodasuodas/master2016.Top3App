@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>master2016.Top3App</groupId>
-  <artifactId>master2016.Top3App</artifactId>
+  <artifactId>trandingTopology</artifactId>
   <version>1.0-SNAPSHOT</version>
   <build>
     <plugins>
@@ -15,11 +15,24 @@
           <target>1.7</target>
         </configuration>
       </plugin>
+      <plugin>
+    	<artifactId>maven-assembly-plugin</artifactId>
+    	<configuration>
+      		<descriptorRefs>  
+        		<descriptorRef>jar-with-dependencies</descriptorRef>
+      		</descriptorRefs>
+      		<archive>
+        		<manifest>
+          			<mainClass>com.path.to.main.Class</mainClass>
+        		</manifest>
+      		</archive>
+    	</configuration>
+  	</plugin>
     </plugins>
   </build>
   <packaging>jar</packaging>
 
-  <name>master2016.Top3App</name>
+  <name>trandingTopology</name>
   <url>http://maven.apache.org</url>
 
   <properties>
@@ -37,6 +50,7 @@
       <groupId>org.apache.storm</groupId>
       <artifactId>storm-core</artifactId>
       <version>1.0.2</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
