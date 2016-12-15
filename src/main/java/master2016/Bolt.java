@@ -64,7 +64,9 @@ public class Bolt extends BaseRichBolt
     
     public void declareOutputFields( OutputFieldsDeclarer outputFieldsDeclarer ){}
 
-    
+    /*
+    *   Increases the counter in a HashCount structure of a given hashtag
+    */
     private void count( String hashtag )
     {
         if( HashCount.containsKey( hashtag ) )
@@ -77,7 +79,9 @@ public class Bolt extends BaseRichBolt
         	HashCount.put( hashtag, 1 );
     }
 
-    
+    /*
+    *   Prints top three hashtags by count (to a file) of a current HashCount structure
+    */
     private void printResult()
     {
         List< hash > hashList = Arrays.asList( new hash( 0, "null" ), new hash( 0, "null" ), new hash( 0, "null" ) );        
@@ -106,7 +110,13 @@ public class Bolt extends BaseRichBolt
         }
         resultToFile( hashList );
     }
-    
+
+    /*
+    *   Searches for an element in the list that has the same count as new element,
+    *   compares hash strings and inserts new element based on alphabetical order
+    *   @accepts List<hash>
+    *   @accepts hash
+    */
     private void insertFollowingCountAndAlph( List< hash > list, hash newElement ) {
     	
     	boolean stop = false;
@@ -130,7 +140,13 @@ public class Bolt extends BaseRichBolt
     		i++;
     	}
     }
-    
+
+    /*
+    *   Inserts new element into the list at a given position.
+    *   @accepts List<hash>
+    *   @accepts hash
+    *   @accepts int
+    */
     private void insertInPos( List< hash > list, hash newElement, int pos )
     {
     	if( pos >= 0 && pos < list.size() )
@@ -143,6 +159,10 @@ public class Bolt extends BaseRichBolt
     	}
     }
 
+    /*
+    *   Function which prints passed list of hashes to a file in provided folder
+    *   @accepts List<hash>
+    */
     private void resultToFile(List<hash> hashList)
     {
     	String path = "";
@@ -184,6 +204,10 @@ public class Bolt extends BaseRichBolt
    		 System.out.println( "Path( " + path + " ) does not define a folder");
     }
 
+
+    /*
+    *   Data structure for storing hashtag and its count
+    */
     private class hash
     {
     	private int count = 0;
