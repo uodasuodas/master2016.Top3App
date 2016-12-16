@@ -18,16 +18,16 @@ public class Bolt extends BaseRichBolt
 {
     private String Keyword;
     private String Lang;
-    private String Folder;
-    private Boolean Started = false;
-    private Integer Counter = 0;
-    private Map< String, Integer > HashCount = new TreeMap< String, Integer >();
+    private String OutputFolder;
+    private Boolean CountStarted = false;
+    private Integer OutputLineCounter = 0;
+    private Map< String, Integer > HashtagCountMap = new TreeMap< String, Integer >();
 
     public Bolt( String lang, String keyword, String folder )
     {
         this.Lang = lang;
         this.Keyword = keyword;
-        this.Folder = folder;
+        this.OutputFolder = folder;
     }
     
     public void prepare( Map map, TopologyContext topologyContext, OutputCollector outputCollector ){}
@@ -35,28 +35,28 @@ public class Bolt extends BaseRichBolt
     
     public void execute( Tuple tuple )
     {
-    	String lang = ( String )tuple.getValueByField( Spout.FieldName1 );
-        String hashtag = ( String )tuple.getValueByField( Spout.FieldName2 );      
+    	String lang = ( String )tuple.getValueByField( Spout.FieldLangName );
+        String hashtag = ( String )tuple.getValueByField( Spout.FieldHashtagName );      
         if( hashtag.equals( Keyword ) )
         {
-            if( Started == false )
+            if( !CountStarted )
             {
-                Started = true;
+            	CountStarted = true;
                 System.out.println( lang + ", " + hashtag + " -> start (" + lang + ")" );
             }
             else
             {	
-                Started = false;
-                Counter++;
+            	CountStarted = false;
+            	OutputLineCounter++;
                 System.out.println( lang + ", " + hashtag + " -> stop (" + lang + ")" );
                 printResult();
-                HashCount = new TreeMap< String, Integer >();
+                HashtagCountMap.clear();
             }
         }
         else
         {
         	System.out.println( lang + ", " + hashtag );
-        	if( Started == true )    
+        	if( CountStarted )    
         		count( hashtag );
         }
     }
@@ -69,14 +69,13 @@ public class Bolt extends BaseRichBolt
     */
     private void count( String hashtag )
     {
-        if( HashCount.containsKey( hashtag ) )
+        if( HashtagCountMap.containsKey( hashtag ) )
         {
-        	Integer count = HashCount.get( hashtag );
-            count++;
-            HashCount.put( hashtag, count );
+        	Integer count = HashtagCountMap.get( hashtag );
+            HashtagCountMap.put( hashtag, ++count );
         }
         else
-        	HashCount.put( hashtag, 1 );
+        	HashtagCountMap.put( hashtag, 1 );
     }
 
     /*
@@ -84,13 +83,52 @@ public class Bolt extends BaseRichBolt
     */
     private void printResult()
     {
-        List< hash > hashList = Arrays.asList( new hash( 0, "null" ), new hash( 0, "null" ), new hash( 0, "null" ) );        
-        for( Map.Entry< String, Integer > entry : HashCount.entrySet() )
+    	List< hash > top3hashtag = getTop3Hashtags();
+    	if( !OutputFolder.startsWith( "/", 0 ) )
+    		OutputFolder = "/" + OutputFolder;
+    	File folder = new File( OutputFolder );
+    	if( !folder.exists() )
+    	{
+    		if ( !folder.mkdirs() )
+    			System.out.println("Not able to create directory: " + OutputFolder );
+    	}
+    	if( folder.exists() && folder.isDirectory() )
+    	{
+    		if( !OutputFolder.endsWith("/") )
+    			OutputFolder = OutputFolder + "/";
+    		try(
+    				FileWriter fw = new FileWriter( OutputFolder + Lang + "_05.log", true);
+    	            BufferedWriter bw = new BufferedWriter( fw );
+    	            PrintWriter out = new PrintWriter( bw )	
+    	        )
+    		{
+    			out.print( OutputLineCounter + "," + Lang + "," );
+    			for( hash hash : top3hashtag )
+    			{
+    				out.print( hash.hashtag + "," + hash.count );
+    				if( hash != top3hashtag.get( top3hashtag.size() - 1 ) )
+    					out.print( "," );
+    			}
+    			out.println();
+    		}
+    		catch( IOException e )
+    		{
+    			System.out.println( e );
+    		}
+    	}
+    	else if( folder.exists() && !folder.isDirectory() )
+    		System.out.println( "Path( " + OutputFolder + " ) does not define a folder");
+    }
+    
+    private List< hash > getTop3Hashtags()
+    {
+    	List< hash > hashList = Arrays.asList( new hash( 0, "null" ), new hash( 0, "null" ), new hash( 0, "null" ) );        
+        for( Map.Entry< String, Integer > entry : HashtagCountMap.entrySet() )
         {
             hash newHash = new hash( entry.getValue(), entry.getKey() );
             if( newHash.count == hashList.get( 0 ).count ||
             		newHash.count == hashList.get( 1 ).count )
-            	insertFollowingCountAndAlph( hashList, newHash );
+            	insertFollowingCountAndAlphOrder( hashList, newHash );
             
             else if( newHash.count > hashList.get( 0 ).count )
             	insertInPos( hashList, newHash, 0 );
@@ -103,12 +141,12 @@ public class Bolt extends BaseRichBolt
             
             else if( newHash.count == hashList.get( 2 ).count )
             {
-            	int compare = newHash.hashtag.toLowerCase().compareTo( hashList.get( 2 ).hashtag.toLowerCase() );
-                if( compare < 0 )
+                if( newHash.hashtag.toLowerCase().compareTo( 
+                		hashList.get( 2 ).hashtag.toLowerCase() ) < 0 )
                 	hashList.set( 2, newHash );
             }
         }
-        resultToFile( hashList );
+        return hashList;
     }
 
     /*
@@ -117,20 +155,18 @@ public class Bolt extends BaseRichBolt
     *   @accepts List<hash>
     *   @accepts hash
     */
-    private void insertFollowingCountAndAlph( List< hash > list, hash newElement ) {
+    private void insertFollowingCountAndAlphOrder( List< hash > list, hash newElement ) {
     	
     	boolean stop = false;
     	int i = 0;
     	while( !stop && i < list.size() )
     	{
-    		if( list.get( i ).count == newElement.count )
+    		if( list.get( i ).count == newElement.count &&
+    				newElement.hashtag.toLowerCase().compareTo
+    				( list.get( i ).hashtag.toLowerCase() ) < 0 )
     		{
-    			int compare = newElement.hashtag.toLowerCase().compareTo( list.get( i ).hashtag.toLowerCase() );
-    			if( compare < 0 )
-    			{
-    				insertInPos( list, newElement, i);
-    				stop = true;
-    			}
+    			insertInPos( list, newElement, i);
+    			stop = true;
     		}
     		else if( list.get( i ).count < newElement.count )
     		{
@@ -158,52 +194,6 @@ public class Bolt extends BaseRichBolt
         	list.set( pos, newElement );
     	}
     }
-
-    /*
-    *   Function which prints passed list of hashes to a file in provided folder
-    *   @accepts List<hash>
-    */
-    private void resultToFile(List<hash> hashList)
-    {
-    	String path = "";
-    	if( !Folder.startsWith( "/", 0 ) )
-    		path = path + "/" + Folder;
-    	else
-    		path = path + Folder;
-    	File folder = new File( path );
-    	if( !folder.exists() )
-    	{
-    		if ( !folder.mkdirs() )
-    			System.out.println("Not able to create directory: " + path );
-    	}
-    	if( folder.exists() && folder.isDirectory() )
-    	{
-    		if( !path.endsWith("/") )
-	    		path = path + "/";
-    		try(
-    				FileWriter fw = new FileWriter( path + Lang + "_05.log", true);
-    	            BufferedWriter bw = new BufferedWriter( fw );
-    	            PrintWriter out = new PrintWriter( bw )	
-    	        )
-    		{
-    			out.print( Counter + "," + Lang + "," );
-    			for( hash hash : hashList )
-    			{
-    				out.print( hash.hashtag + "," + hash.count );
-    				if( hash != hashList.get( hashList.size() - 1 ) )
-    					out.print( "," );
-    			}
-    			out.println();
-    		}
-    		catch( IOException e )
-    		{
-    			System.out.println( e );
-    		}
-    	}
-    	else if( folder.exists() && !folder.isDirectory() )
-   		 System.out.println( "Path( " + path + " ) does not define a folder");
-    }
-
 
     /*
     *   Data structure for storing hashtag and its count

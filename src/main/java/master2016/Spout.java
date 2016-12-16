@@ -17,8 +17,8 @@ import java.util.*;
 public class Spout extends BaseRichSpout
 {
     public static final String Stream = "stream";
-    public static final String FieldName1 = "language";
-    public static final String FieldName2 = "hashtag";
+    public static final String FieldLangName = "language";
+    public static final String FieldHashtagName = "hashtag";
     
     private SpoutOutputCollector Collector;
     private String BrokerUrl;
@@ -35,6 +35,7 @@ public class Spout extends BaseRichSpout
     public void open( Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector )
     {
     	this.Collector = spoutOutputCollector;
+    	
         Props = new Properties();
         Props.put( ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BrokerUrl );
         Props.put( "group.id", "Group1" );
@@ -52,12 +53,12 @@ public class Spout extends BaseRichSpout
         try
         {
         	ConsumerRecords< String, String > records = Consumer.poll( 10 );
+        	String lang, hashtag;
         	for( ConsumerRecord< String, String > record : records )
         	{
-        		String lang = record.key();
-        		String hashtag = record.value();
-        		Values values = new Values( lang, hashtag );
-        		Collector.emit( Stream, values );
+        		lang = record.key();
+        		hashtag = record.value();
+        		Collector.emit( Stream, new Values( lang, hashtag ) );
         	}
         }
         catch( Exception e )
@@ -68,6 +69,6 @@ public class Spout extends BaseRichSpout
 
     public void declareOutputFields( OutputFieldsDeclarer outputFieldsDeclarer )
     {
-        outputFieldsDeclarer.declareStream( Stream, new Fields( FieldName1, FieldName2 ) );
+        outputFieldsDeclarer.declareStream( Stream, new Fields( FieldLangName, FieldHashtagName ) );
     }
 }

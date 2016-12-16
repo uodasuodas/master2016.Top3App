@@ -26,16 +26,20 @@ public class Top3App
     	TopologyName = args[ 2 ];
     	Folder = args[ 3 ];
         TopologyBuilder builder = new TopologyBuilder();
+        
+        String [] tupleLangKey;
+        String lang, keyword, spoutName, boltName;
+        
         for( String langKey : LangList )
         {
-            String[] parts = langKey.split( Pattern.quote( ":" ) );
-            String lang = parts[ 0 ];
-            String keyword = parts[ 1 ];
+        	tupleLangKey = langKey.split( Pattern.quote( ":" ) );
+            lang = tupleLangKey[ 0 ];
+            keyword = tupleLangKey[ 1 ];
             
-            String spoutName = "Spout_" + lang;
+            spoutName = "Spout_" + lang;
             builder.setSpout( spoutName, new Spout( BrokerUrl, lang ) );
             
-            String boltName = "Bolt_" + lang;
+            boltName = "Bolt_" + lang;
             builder.setBolt( boltName, new Bolt( lang, keyword, Folder ) )
                     .shuffleGrouping( "Spout_" + lang, Spout.Stream );
         }
